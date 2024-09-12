@@ -62,29 +62,38 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "enter", " ":
-		  fmt.Println("Selected")
-    }
+			fmt.Println("Selected")
+		}
 	}
 
 	return m, nil
 }
 
 func (m model) View() string {
-  var style = lipgloss.NewStyle().
-    BorderStyle(lipgloss.RoundedBorder()).
-    Foreground(lipgloss.Color("#FAFAFA")).
-    Background(lipgloss.Color("#7D56F4")).
-    PaddingLeft(4).
-    Width(22)
 
-    return style.Render("Hello Kitty")
+	var myCuteBorder = lipgloss.Border{
+		Top:         "─",
+		Bottom:      "─",
+		Left:        "│",
+		Right:       "│",
+		TopRight:    "╮",
+		TopLeft:     "╭",
+		BottomLeft:  "╰",
+		BottomRight: "╯",
+	}
+
+	style := lipgloss.NewStyle().
+		BorderStyle(myCuteBorder).
+		BorderForeground(lipgloss.Color("205"))
+
+	return style.Render("Hello Kitty")
 }
 
 func main() {
 	fmt.Println("Hello this is my new golang project!")
-  p := tea.NewProgram(initialModel)
-  if _, err := p.Run(); err != nil {
-    fmt.Printf("Error")
-    os.Exit(1)
-  }
+	p := tea.NewProgram(initialModel)
+	if _, err := p.Run(); err != nil {
+		fmt.Printf("Error")
+		os.Exit(1)
+	}
 }
