@@ -5,7 +5,7 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
-	// "github.com/charmbacelet/lipgloss"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type Deck struct {
@@ -70,7 +70,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-  return "Hello is this working"
+  var style = lipgloss.NewStyle().
+    BorderStyle(lipgloss.RoundedBorder()).
+    Foreground(lipgloss.Color("#FAFAFA")).
+    Background(lipgloss.Color("#7D56F4")).
+    PaddingLeft(4).
+    Width(22)
+
+    return style.Render("Hello Kitty")
 }
 
 func main() {
