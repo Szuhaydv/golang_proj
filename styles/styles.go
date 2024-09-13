@@ -13,37 +13,48 @@ var defaultBorder = lipgloss.Border{
 	BottomRight: "┘",
 }
 
-var emptyHeaderDivider = lipgloss.NewStyle().
-	Border(lipgloss.Border{
-		Top:    "┬",
-		Bottom: "┴",
-	}, true, false).Render("│")
+func Header(empty bool) string {
 
-func EmptyHeader() string {
+	headerDivider := lipgloss.NewStyle().
+		Border(lipgloss.Border{
+			Top: "┬",
+			Bottom: func() string {
+				if empty {
+					return "┴"
+				}
+				return "┼"
+			}(),
+		}, true, false).Render("│")
+
 	leftCellBorder, middleCellBorder, rightCellBorder := defaultBorder, defaultBorder, defaultBorder
 
 	leftCellBorder.TopLeft = "╭"
-  leftCellBorder.BottomLeft = "╰"
 	rightCellBorder.TopRight = "╮"
-  rightCellBorder.BottomRight = "╯"
+	if empty {
+		leftCellBorder.BottomLeft = "╰"
+		rightCellBorder.BottomRight = "╯"
+	} else {
+    leftCellBorder.BottomLeft = "├"
+		rightCellBorder.BottomRight = "┤"
+	}
 
 	leftCellStyle := lipgloss.NewStyle().
 		Border(leftCellBorder, true, false, true, true).
 		PaddingLeft(2).
 		Bold(true).
-    Width(24)
+		Width(24)
 
 	middleCellStyle := lipgloss.NewStyle().
 		Border(middleCellBorder, true, false, true, false).
-    PaddingLeft(2).
-    Bold(true).
-    Width(18)
+		PaddingLeft(2).
+		Bold(true).
+		Width(18)
 
-  rightCellStyle := lipgloss.NewStyle().
-    Border(rightCellBorder, true, true, true, false).
-    PaddingLeft(2).
-    Bold(true).
-    Width(16)
+	rightCellStyle := lipgloss.NewStyle().
+		Border(rightCellBorder, true, true, true, false).
+		PaddingLeft(2).
+		Bold(true).
+		Width(16)
 
-	return lipgloss.JoinHorizontal(0, leftCellStyle.Render("Decks"), emptyHeaderDivider, middleCellStyle.Render("Review / Total"), emptyHeaderDivider, rightCellStyle.Render("Created at"))
+	return lipgloss.JoinHorizontal(0, leftCellStyle.Render("Decks"), headerDivider, middleCellStyle.Render("Review / Total"), headerDivider, rightCellStyle.Render("Created at"))
 }

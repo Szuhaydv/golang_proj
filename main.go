@@ -48,5 +48,5 @@ func main() {
 	// 	os.Exit(1)
 	// }
 
-  fmt.Println(styles.EmptyHeader()) 
+  fmt.Println(styles.Header(false)) 
 }
