@@ -3,49 +3,46 @@ package main
 import (
 	"Szuhaydv/golang_proj/styles"
 
+	"fmt"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"os"
-  "fmt"
-	tea "github.com/charmbracelet/bubbletea"
 	// "github.com/charmbracelet/lipgloss"
 )
 
-type Deck struct {
-	name      string
-	review    string
-	total     string
-	createdAt string
-}
-
 type model struct {
-	decks       []Deck
-	hoveredDeck int
+	decks          []styles.Deck
+	hoveredDeck    int
+	selectedDeck   int
+	selectedButton int
 }
 
 func initialModel() model {
-  return model{
-    decks: []Deck{
-      {
-        "Spanish 🇪🇸",
-        "15",
-        "95",
-        "2012-12-24",
-      },
-      {
-        "German 🇩🇪",
-        "34",
-        "128",
-        "2011-05-14",
-      },
-      {
-        "English 🇬🇧",
-        "9",
-        "36",
-        "2009-07-18",
-      },
-    },
-    hoveredDeck: 0,
-  }
+	return model{
+		decks: []styles.Deck{
+			{
+				Name:      "Spanish 🇪🇸",
+				Review:    "15",
+				Total:     "95",
+				CreatedAt: "2012-12-24",
+			},
+			{
+				Name:      "German 🇩🇪",
+				Review:    "34",
+				Total:     "128",
+				CreatedAt: "2011-05-14",
+			},
+			{
+				Name:      "English 🇬🇧",
+				Review:    "9",
+				Total:     "36",
+				CreatedAt: "2009-07-18",
+			},
+		},
+		hoveredDeck:    0,
+		selectedDeck:   -1,
+		selectedButton: -1,
+	}
 }
 
 func (m model) Init() tea.Cmd {
@@ -53,41 +50,24 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) View() string {
-  var isDecksEmpty bool
+	var isDecksEmpty bool
 	if len(m.decks) == 0 {
-    isDecksEmpty = true
-  }
-  header := styles.Header(isDecksEmpty)
+		isDecksEmpty = true
+	}
+	header := styles.Header(isDecksEmpty)
 
-  rows := []string{header}
-  for i, deck := range m.decks {
-    isRowSelected := i == m.hoveredDeck
-    deckName := deck.name
-    if isRowSelected {
-      deckName = "→ " + deckName 
-    }
-    if i == len(m.decks) - 1 {
-      rows = append(rows, styles.Row(true, isRowSelected, deckName, deck.review, deck.total, deck.createdAt)) 
-    } else {
-      rows = append(rows, styles.Row(false, isRowSelected, deckName, deck.review, deck.total, deck.createdAt))
-    }
-  }
+	rows := []string{header}
+	for i, deck := range m.decks {
+		deckState := styles.DeckState{
+			Deck:           deck,
+			IsDeckHovered:  i == m.hoveredDeck,
+			IsDeckSelected: i == m.selectedDeck,
+			IsBottomRow:    i == len(m.decks)-1,
+		}
+		rows = append(rows, styles.Row(deckState))
+	}
 
-	buttonStyle := lipgloss.NewStyle().
-		Background(lipgloss.Color("#FF0000")).
-		Foreground(lipgloss.Color("#FFFFFF")).
-		Border(lipgloss.RoundedBorder()).
-		Padding(0, 1)
-
-	buttonStyle2 := buttonStyle.Background(lipgloss.Color("#4CAC00"))
-	
-  playButton := buttonStyle.MarginLeft(4).Render("▶ Play")
-	addDeckButton := buttonStyle2.Margin(0, 8).Render("+ Add deck")
-	addCardButton := buttonStyle2.MarginRight(4).Render("+ Add card")
-
-	buttons := lipgloss.JoinHorizontal(0, playButton, addDeckButton, addCardButton)
-
-  return lipgloss.JoinVertical(0, rows...) + "\n\n" + buttons
+	return lipgloss.JoinVertical(0, rows...) + "\n\n" + styles.ButtonMenu(m.selectedButton)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -97,17 +77,37 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		case "up", "k":
+			if m.hoveredDeck == -1 {
+				break
+			}
 			if m.hoveredDeck > 0 {
 				m.hoveredDeck--
 			}
 
 		case "down", "j":
+			if m.hoveredDeck == -1 {
+				break
+			}
 			if m.hoveredDeck < len(m.decks)-1 {
 				m.hoveredDeck++
 			}
+		case "enter":
+			m.selectedDeck = m.hoveredDeck
+			m.hoveredDeck = -1
+			m.selectedButton = 0
+
+		case "right", "l":
+			if m.selectedButton != -1 && m.selectedButton < 2 {
+				m.selectedButton++
+			}
+		case "left", "h":
+			if m.selectedButton != -1 && m.selectedButton > 0 {
+				m.selectedButton--
+			}
 		}
+
 	}
-  return m, nil
+	return m, nil
 }
 
 func main() {
