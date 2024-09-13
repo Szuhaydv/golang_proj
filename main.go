@@ -1,10 +1,11 @@
 package main
 
 import (
+	"Szuhaydv/golang_proj/styles"
 	"fmt"
-  "Szuhaydv/golang_proj/styles"
-	// "os"
 
+	"github.com/charmbracelet/lipgloss"
+	// "os"
 	// tea "github.com/charmbracelet/bubbletea"
 	// "github.com/charmbracelet/lipgloss"
 )
@@ -48,5 +49,10 @@ func main() {
 	// 	os.Exit(1)
 	// }
 
-  fmt.Println(styles.Header(false)) 
+  header := styles.Header(false)
+  row := styles.Row(true, "Spanish 🇪🇸", "15", "95", "2012-12-14")
+  table := lipgloss.JoinVertical(0, header, row)
+
+
+  fmt.Println(table) 
 }
