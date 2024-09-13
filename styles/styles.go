@@ -59,7 +59,7 @@ func Header(empty bool) string {
 	return lipgloss.JoinHorizontal(0, leftCellStyle.Render("Decks"), headerDivider, middleCellStyle.Render("Review / Total"), headerDivider, rightCellStyle.Render("Created at"))
 }
 
-func Row(bottom bool, deckName string, review string, total string, createdAt string) string {
+func Row(bottom bool, selected bool, deckName string, review string, total string, createdAt string) string {
   cellDivider := lipgloss.NewStyle().Border(lipgloss.Border{
 			Bottom: func() string {
 				if bottom {
@@ -83,6 +83,10 @@ func Row(bottom bool, deckName string, review string, total string, createdAt st
 		Border(leftCellBorder, false, false, true, true).
 		PaddingLeft(2).
 		Width(24)
+
+  if selected {
+    leftCellStyle = leftCellStyle.Foreground(lipgloss.Color("#4CAC00"))
+  }
 
 	middleCellStyle := lipgloss.NewStyle().
 		Border(defaultBorder, false, false, true, false).
