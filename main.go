@@ -49,10 +49,23 @@ func main() {
 	// 	os.Exit(1)
 	// }
 
-  header := styles.Header(false)
-  row := styles.Row(true, "Spanish 🇪🇸", "15", "95", "2012-12-14")
-  table := lipgloss.JoinVertical(0, header, row)
+	buttonStyle := lipgloss.NewStyle().
+		Background(lipgloss.Color("#FF0000")).
+		Foreground(lipgloss.Color("#FFFFFF")).
+		Border(lipgloss.RoundedBorder()).
+    Padding(0, 1)
 
+  buttonStyle2 := buttonStyle.Background(lipgloss.Color("#4CAC00"))
 
-  fmt.Println(table) 
+	header := styles.Header(false)
+	row1 := styles.Row(false, "Spanish 🇪🇸", "15", "95", "2012-12-14")
+	row2 := styles.Row(true, "Spanish 🇪🇸", "15", "95", "2012-12-14")
+	table := lipgloss.JoinVertical(0, header, row1, row2)
+  playButton := buttonStyle.MarginLeft(4).Render("▶ Play")
+  addDeckButton := buttonStyle2.Margin(0, 8).Render("+ Add deck")
+  addCardButton := buttonStyle2.MarginRight(4).Render("+ Add card")
+
+  buttons := lipgloss.JoinHorizontal(0, playButton, addDeckButton, addCardButton)
+
+	fmt.Println(table + "\n\n" + buttons)
 }
