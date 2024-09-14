@@ -4,9 +4,11 @@ import (
 	"Szuhaydv/golang_proj/styles"
 
 	"fmt"
+	"os"
+
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"os"
 	// "github.com/charmbracelet/lipgloss"
 )
 
@@ -16,8 +18,8 @@ const (
 	DeckSelection AppState = iota
 	ButtonMenu
 	AddingDeck
-  AddingCard
-  PlayingDeck
+	AddingCard
+	PlayingDeck
 )
 
 type model struct {
@@ -26,6 +28,7 @@ type model struct {
 	selectedDeck   int
 	selectedButton int
 	appState       AppState
+	textInput      textinput.Model
 }
 
 func initialModel() model {
@@ -54,6 +57,7 @@ func initialModel() model {
 		selectedDeck:   -1,
 		selectedButton: -1,
 		appState:       DeckSelection,
+    textInput: styles.AddDeckMenu(),
 	}
 }
 
@@ -62,7 +66,10 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) View() string {
-	header := styles.Header(len(m.decks) == 0)
+	if m.appState == AddingDeck {
+    return m.textInput.View()
+  } 
+  header := styles.Header(len(m.decks) == 0)
 	rows := []string{header}
 
 	for i, deck := range m.decks {
@@ -106,7 +113,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.selectedDeck = m.hoveredDeck
 				m.hoveredDeck = -1
 				m.selectedButton = 0
-        m.appState = ButtonMenu
+				m.appState = ButtonMenu
 			}
 		case ButtonMenu:
 			switch msg.String() {
@@ -119,16 +126,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.selectedButton != -1 && m.selectedButton > 0 {
 					m.selectedButton--
 				}
-      case "enter":
-        switch m.selectedButton {
-        case 0:
-          m.appState = PlayingDeck
-        case 1:
-          m.appState = AddingDeck
-        case 2:
-          m.appState = AddingCard
-        }
+			case "enter":
+				switch m.selectedButton {
+				case 0:
+					m.appState = PlayingDeck
+				case 1:
+					m.appState = AddingDeck
+				case 2:
+					m.appState = AddingCard
+				}
 			}
+    case AddingDeck:
+      if msg.String() == "enter" {
+        fmt.Println("Added deck")
+      }
+      m.textInput, _ = m.textInput.Update(msg)
 		}
 
 	}

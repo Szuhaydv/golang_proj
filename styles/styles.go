@@ -2,6 +2,7 @@ package styles
 
 import (
 	"github.com/charmbracelet/lipgloss"
+  "github.com/charmbracelet/bubbles/textinput"
 )
 
 type Deck struct {
@@ -156,4 +157,13 @@ func ButtonMenu(selectedButton int) string {
 		buttons[selectedButton] = lipgloss.NewStyle().MarginLeft(arrowMargin).Render("→ ")
 	}
 	return lipgloss.JoinHorizontal(lipgloss.Center, buttons...)
+}
+
+func AddDeckMenu() textinput.Model {
+  ti := textinput.New()
+	ti.Placeholder = "Enter deck name"
+	ti.Focus()
+	ti.CharLimit = 20
+	ti.Width = 24
+  return ti
 }
