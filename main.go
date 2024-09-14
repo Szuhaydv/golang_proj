@@ -2,6 +2,7 @@ package main
 
 import (
 	"Szuhaydv/golang_proj/styles"
+	"strconv"
 
 	"fmt"
 	"os"
@@ -44,28 +45,61 @@ func parseDate(dateStr string) time.Time {
 	return date
 }
 
-func initialModel() model {
-	return model{
-		decks: []styles.Deck{
-			{
-				Name:      "Spanish 🇪🇸",
-				Review:    "15",
-				Total:     "95",
-				CreatedAt: parseDate("2012-12-24"),
-			},
-			{
-				Name:      "German 🇩🇪",
-				Review:    "34",
-				Total:     "128",
-				CreatedAt: parseDate("2011-05-14"),
-			},
-			{
-				Name:      "English 🇬🇧",
-				Review:    "9",
-				Total:     "36",
-				CreatedAt: parseDate("2009-07-18"),
-			},
+var uninitializedDecks = []styles.Deck{
+	{
+		Name:      "Spanish 🇪🇸",
+		CreatedAt: parseDate("2012-12-24"),
+		Cards: []styles.Flashcard{
+			{FaceUp: "Hola", FaceDown: "Hello", IsLearned: false, ReviewDate: parseDate("2024-09-15")},
+			{FaceUp: "Adiós", FaceDown: "Goodbye", IsLearned: true, ReviewDate: parseDate("2024-09-16")},
+			{FaceUp: "Gracias", FaceDown: "Thank you", IsLearned: false, ReviewDate: parseDate("2024-09-17")},
+			{FaceUp: "Por favor", FaceDown: "Please", IsLearned: true, ReviewDate: parseDate("2024-09-18")},
+			{FaceUp: "Perdón", FaceDown: "Sorry", IsLearned: false, ReviewDate: parseDate("2024-09-19")},
 		},
+	},
+	{
+		Name:      "German 🇩🇪",
+		CreatedAt: parseDate("2011-05-14"),
+		Cards: []styles.Flashcard{
+			{FaceUp: "Hallo", FaceDown: "Hello", IsLearned: false, ReviewDate: parseDate("2024-09-20")},
+			{FaceUp: "Tschüss", FaceDown: "Goodbye", IsLearned: true, ReviewDate: parseDate("2024-09-21")},
+			{FaceUp: "Danke", FaceDown: "Thank you", IsLearned: false, ReviewDate: parseDate("2024-09-09")},
+			{FaceUp: "Bitte", FaceDown: "Please", IsLearned: true, ReviewDate: parseDate("2024-09-23")},
+			{FaceUp: "Entschuldigung", FaceDown: "Sorry", IsLearned: false, ReviewDate: parseDate("2024-09-11")},
+		},
+	},
+	{
+		Name:      "French 🇫🇷",
+		CreatedAt: parseDate("2009-07-18"),
+		Cards: []styles.Flashcard{
+			{FaceUp: "Bonjour", FaceDown: "Hello", IsLearned: true, ReviewDate: parseDate("2024-09-13")},
+			{FaceUp: "Merci", FaceDown: "Thank you", IsLearned: false, ReviewDate: parseDate("2024-09-12")},
+			{FaceUp: "Pomme", FaceDown: "Apple", IsLearned: true, ReviewDate: parseDate("2024-09-25")},
+			{FaceUp: "Chat", FaceDown: "Cat", IsLearned: false, ReviewDate: parseDate("2024-09-22")},
+			{FaceUp: "Maison", FaceDown: "House", IsLearned: true, ReviewDate: parseDate("2024-09-30")},
+		},
+	},
+}
+
+func initializeDecks(decks []styles.Deck) *[]styles.Deck {
+	for deckIndex, deck := range decks {
+		decks[deckIndex].Total = strconv.Itoa(len(decks[deckIndex].Cards))
+		readyForReview := 0
+		for _, card := range deck.Cards {
+			if card.ReviewDate.Before(time.Now()) {
+				readyForReview += 1
+			}
+		}
+		decks[deckIndex].Review = strconv.Itoa(readyForReview)
+	}
+  return &decks
+}
+
+func initialModel() model {
+  initializedDecks := initializeDecks(uninitializedDecks)
+
+	return model{
+    decks: *initializedDecks,
 		hoveredDeck:    0,
 		selectedDeck:   -1,
 		selectedButton: -1,
