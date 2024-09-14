@@ -57,7 +57,7 @@ func initialModel() model {
 		selectedDeck:   -1,
 		selectedButton: -1,
 		appState:       DeckSelection,
-    textInput: styles.AddDeckMenu(),
+    textInput: styles.InitTextinput(),
 	}
 }
 
@@ -67,7 +67,7 @@ func (m model) Init() tea.Cmd {
 
 func (m model) View() string {
 	if m.appState == AddingDeck {
-    return m.textInput.View()
+    return styles.AddDeckMenu(m.textInput)
   } 
   header := styles.Header(len(m.decks) == 0)
 	rows := []string{header}
@@ -138,7 +138,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
     case AddingDeck:
       if msg.String() == "enter" {
-        fmt.Println("Added deck")
+        
+      }
+      if msg.String() == "esc" {
+        m.appState = DeckSelection
+        m.hoveredDeck = 0
+        m.selectedDeck = -1
+        m.selectedButton = -1
+        m.textInput.Reset()
       }
       m.textInput, _ = m.textInput.Update(msg)
 		}

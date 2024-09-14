@@ -1,8 +1,8 @@
 package styles
 
 import (
+	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/lipgloss"
-  "github.com/charmbracelet/bubbles/textinput"
 )
 
 type Deck struct {
@@ -159,11 +159,41 @@ func ButtonMenu(selectedButton int) string {
 	return lipgloss.JoinHorizontal(lipgloss.Center, buttons...)
 }
 
-func AddDeckMenu() textinput.Model {
-  ti := textinput.New()
+func InitTextinput() textinput.Model {
+   ti := textinput.New()
 	ti.Placeholder = "Enter deck name"
 	ti.Focus()
+  ti.TextStyle = lipgloss.NewStyle().Background(lipgloss.Color("#4CAC00")).Foreground(lipgloss.Color("#000000"))
 	ti.CharLimit = 20
 	ti.Width = 24
   return ti
+}
+
+func AddDeckMenu(ti textinput.Model) string {
+  
+  boxStyle := lipgloss.NewStyle().
+    Border(lipgloss.RoundedBorder()).
+    Width(60)
+
+  escText := lipgloss.NewStyle().Faint(true).Render("Esc")
+	title := "Creating new deck"
+  contentWidth := 60 
+	escWidth := lipgloss.Width(escText)
+	titleWidth := lipgloss.Width(title)
+	paddingLeft := (contentWidth - escWidth - titleWidth) / 2
+
+  titleText := lipgloss.NewStyle().MarginLeft(paddingLeft).Underline(true).Bold(true).Render(title)
+	titleRow := lipgloss.JoinHorizontal(lipgloss.Left, escText, titleText)
+
+  inputLabelWidth := escWidth + (contentWidth - escWidth - 24) / 2
+  labelStyle := lipgloss.NewStyle().
+    Width(inputLabelWidth).
+    Align(lipgloss.Right).
+    MarginRight(2)
+
+  inputLabel := labelStyle.Render("Name:")
+
+  inputRow := lipgloss.JoinHorizontal(lipgloss.Center, inputLabel, ti.View())
+
+  return boxStyle.Render(lipgloss.JoinVertical(0, titleRow + "\n\n", inputRow + "\n\n"))
 }
