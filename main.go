@@ -5,6 +5,7 @@ import (
 
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -32,6 +33,17 @@ type model struct {
 	textInput      textinput.Model
 }
 
+const layout = "2006-01-02"
+
+func parseDate(dateStr string) time.Time {
+	date, err := time.Parse(layout, dateStr)
+	if err != nil {
+		fmt.Println("Error parsing date:", err)
+		return time.Time{}
+	}
+	return date
+}
+
 func initialModel() model {
 	return model{
 		decks: []styles.Deck{
@@ -39,19 +51,19 @@ func initialModel() model {
 				Name:      "Spanish 🇪🇸",
 				Review:    "15",
 				Total:     "95",
-				CreatedAt: "2012-12-24",
+				CreatedAt: parseDate("2012-12-24"),
 			},
 			{
 				Name:      "German 🇩🇪",
 				Review:    "34",
 				Total:     "128",
-				CreatedAt: "2011-05-14",
+				CreatedAt: parseDate("2011-05-14"),
 			},
 			{
 				Name:      "English 🇬🇧",
 				Review:    "9",
 				Total:     "36",
-				CreatedAt: "2009-07-18",
+				CreatedAt: parseDate("2009-07-18"),
 			},
 		},
 		hoveredDeck:    0,
@@ -101,9 +113,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		if m.appState == DeckSelection || m.appState == ButtonMenu {
 			if msg.String() == "A" {
-	      m.selectedButton = 2
-        m = selectButton(m)
-        return m, nil
+				m.selectedButton = 2
+				m = selectButton(m)
+				return m, nil
 			}
 		}
 		switch m.appState {
@@ -182,7 +194,7 @@ func selectButton(m model) model {
 	case 2:
 		m.appState = AddingDeck
 	}
-  return m
+	return m
 }
 
 func returnToMainMenu(m model) model {

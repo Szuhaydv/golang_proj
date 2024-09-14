@@ -2,6 +2,7 @@ package styles
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/lipgloss"
@@ -11,14 +12,14 @@ type Flashcard struct {
   FaceUp string
   FaceDown string
   IsLearned bool
-  ReviewDate string
+  ReviewDate time.Time
 }
 
 type Deck struct {
 	Name      string
 	Review    string
 	Total     string
-	CreatedAt string
+	CreatedAt time.Time
   Cards []Flashcard
 }
 
@@ -130,7 +131,7 @@ func Row(state DeckState) string {
 		Align(lipgloss.Center).
 		Width(16)
 
-	return lipgloss.JoinHorizontal(0, leftCellStyle.Render(state.Deck.Name), cellDivider, middleCellStyle.Render(state.Deck.Review+" / "+state.Deck.Total), cellDivider, rightCellStyle.Render(state.Deck.CreatedAt))
+	return lipgloss.JoinHorizontal(0, leftCellStyle.Render(state.Deck.Name), cellDivider, middleCellStyle.Render(state.Deck.Review+" / "+state.Deck.Total), cellDivider, rightCellStyle.Render(state.Deck.CreatedAt.Format("2006-01-02")))
 }
 
 func checkIfButtonSelected(selectedButton int, buttonNo int) int {
