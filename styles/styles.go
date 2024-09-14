@@ -42,7 +42,7 @@ func Header(empty bool) string {
 			}(),
 		}, true, false).Render("│")
 
-	leftCellBorder, middleCellBorder, rightCellBorder := defaultBorder, defaultBorder, defaultBorder
+	leftCellBorder, rightCellBorder := defaultBorder, defaultBorder
 
 	leftCellBorder.TopLeft = "╭"
 	rightCellBorder.TopRight = "╮"
@@ -54,25 +54,27 @@ func Header(empty bool) string {
 		rightCellBorder.BottomRight = "┤"
 	}
 
-	leftCellStyle := lipgloss.NewStyle().
+  headerCellStyle := lipgloss.NewStyle().PaddingLeft(2).Bold(true)
+
+	leftCellStyle := headerCellStyle.
 		Border(leftCellBorder, true, false, true, true).
-		PaddingLeft(2).
-		Bold(true).
 		Width(24)
 
-	middleCellStyle := lipgloss.NewStyle().
-		Border(middleCellBorder, true, false, true, false).
-		PaddingLeft(2).
-		Bold(true).
+	middleCellStyle := headerCellStyle.
+		Border(defaultBorder, true, false).
 		Width(18)
 
-	rightCellStyle := lipgloss.NewStyle().
+	rightCellStyle := headerCellStyle.
 		Border(rightCellBorder, true, true, true, false).
-		PaddingLeft(2).
-		Bold(true).
 		Width(16)
 
-	return lipgloss.JoinHorizontal(0, leftCellStyle.Render("Decks"), headerDivider, middleCellStyle.Render("Review / Total"), headerDivider, rightCellStyle.Render("Created at"))
+	return lipgloss.JoinHorizontal(lipgloss.Bottom, 
+    leftCellStyle.Render("Decks"), 
+    headerDivider, 
+    middleCellStyle.Render("Review / Total"), 
+    headerDivider, 
+    rightCellStyle.Render("Created at"),
+  )
 }
 
 func Row(state DeckState) string {

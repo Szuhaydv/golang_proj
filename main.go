@@ -10,11 +10,22 @@ import (
 	// "github.com/charmbracelet/lipgloss"
 )
 
+type AppState int
+
+const (
+	DeckSelection AppState = iota
+	ButtonMenu
+	AddingDeck
+  AddingCard
+  PlayingDeck
+)
+
 type model struct {
 	decks          []styles.Deck
 	hoveredDeck    int
 	selectedDeck   int
 	selectedButton int
+	appState       AppState
 }
 
 func initialModel() model {
@@ -42,6 +53,7 @@ func initialModel() model {
 		hoveredDeck:    0,
 		selectedDeck:   -1,
 		selectedButton: -1,
+		appState:       DeckSelection,
 	}
 }
 
@@ -50,13 +62,9 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) View() string {
-	var isDecksEmpty bool
-	if len(m.decks) == 0 {
-		isDecksEmpty = true
-	}
-	header := styles.Header(isDecksEmpty)
-
+	header := styles.Header(len(m.decks) == 0)
 	rows := []string{header}
+
 	for i, deck := range m.decks {
 		deckState := styles.DeckState{
 			Deck:           deck,
@@ -73,36 +81,53 @@ func (m model) View() string {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c", "q":
+		if msg.String() == "ctrl+c" || msg.String() == "q" {
 			return m, tea.Quit
-		case "up", "k":
-			if m.hoveredDeck == -1 {
-				break
-			}
-			if m.hoveredDeck > 0 {
-				m.hoveredDeck--
-			}
+		}
+		switch m.appState {
+		case DeckSelection:
+			switch msg.String() {
+			case "up", "k":
+				if m.hoveredDeck == -1 {
+					break
+				}
+				if m.hoveredDeck > 0 {
+					m.hoveredDeck--
+				}
 
-		case "down", "j":
-			if m.hoveredDeck == -1 {
-				break
+			case "down", "j":
+				if m.hoveredDeck == -1 {
+					break
+				}
+				if m.hoveredDeck < len(m.decks)-1 {
+					m.hoveredDeck++
+				}
+			case "enter":
+				m.selectedDeck = m.hoveredDeck
+				m.hoveredDeck = -1
+				m.selectedButton = 0
+        m.appState = ButtonMenu
 			}
-			if m.hoveredDeck < len(m.decks)-1 {
-				m.hoveredDeck++
-			}
-		case "enter":
-			m.selectedDeck = m.hoveredDeck
-			m.hoveredDeck = -1
-			m.selectedButton = 0
+		case ButtonMenu:
+			switch msg.String() {
 
-		case "right", "l":
-			if m.selectedButton != -1 && m.selectedButton < 2 {
-				m.selectedButton++
-			}
-		case "left", "h":
-			if m.selectedButton != -1 && m.selectedButton > 0 {
-				m.selectedButton--
+			case "right", "l":
+				if m.selectedButton != -1 && m.selectedButton < 2 {
+					m.selectedButton++
+				}
+			case "left", "h":
+				if m.selectedButton != -1 && m.selectedButton > 0 {
+					m.selectedButton--
+				}
+      case "enter":
+        switch m.selectedButton {
+        case 0:
+          m.appState = PlayingDeck
+        case 1:
+          m.appState = AddingDeck
+        case 2:
+          m.appState = AddingCard
+        }
 			}
 		}
 
