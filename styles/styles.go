@@ -7,11 +7,19 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+type Flashcard struct {
+  FaceUp string
+  FaceDown string
+  IsLearned bool
+  ReviewDate string
+}
+
 type Deck struct {
 	Name      string
 	Review    string
 	Total     string
 	CreatedAt string
+  Cards []Flashcard
 }
 
 type DeckState struct {
@@ -146,10 +154,10 @@ func ButtonMenu(selectedButton int) string {
 	buttonStyle2 := buttonStyle.Background(lipgloss.Color("#4CAC00"))
 
 	playButton := buttonStyle.MarginLeft(checkIfButtonSelected(selectedButton, 0)).Render("▶ Play")
-	addDeckButton := buttonStyle2.Margin(0, checkIfButtonSelected(selectedButton, 2), 0, checkIfButtonSelected(selectedButton, 1)).Render("+ Add deck")
-	addCardButton := buttonStyle2.Render("+ Add card")
+	addCardButton := buttonStyle2.Margin(0, checkIfButtonSelected(selectedButton, 2), 0, checkIfButtonSelected(selectedButton, 1)).Render("+ Add card")
+	addDeckButton := buttonStyle2.Render("(A) Add deck")
 
-	buttons := []string{playButton, addDeckButton, addCardButton}
+	buttons := []string{playButton, addCardButton, addDeckButton}
 	if selectedButton != -1 {
 		buttons = append(buttons[:selectedButton+1], buttons[selectedButton:]...)
 		arrowMargin := 6

@@ -74,6 +74,8 @@ func (m model) View() string {
 		return styles.AddCardMenu(m.textInput, m.decks[m.selectedDeck].Name, true)
 	case AddingCardFaceDown:
 		return styles.AddCardMenu(m.textInput, m.decks[m.selectedDeck].Name, false)
+		//  case PlayingDeck:
+		//    return styles.PlayMenu
 	}
 	header := styles.Header(len(m.decks) == 0)
 	rows := []string{header}
@@ -96,6 +98,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		if msg.String() == "ctrl+c" || msg.String() == "q" {
 			return m, tea.Quit
+		}
+		if m.appState == DeckSelection || m.appState == ButtonMenu {
+			if msg.String() == "A" {
+	      m.selectedButton = 2
+        m = selectButton(m)
+        return m, nil
+			}
 		}
 		switch m.appState {
 		case DeckSelection:
@@ -133,14 +142,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.selectedButton--
 				}
 			case "enter":
-				switch m.selectedButton {
-				case 0:
-					m.appState = PlayingDeck
-				case 1:
-					m.appState = AddingDeck
-				case 2:
-					m.appState = AddingCardFaceUp
-				}
+				m = selectButton(m)
 			}
 		case AddingDeck:
 			switch msg.String() {
@@ -169,6 +171,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	}
 	return m, nil
+}
+
+func selectButton(m model) model {
+	switch m.selectedButton {
+	case 0:
+		m.appState = PlayingDeck
+	case 1:
+		m.appState = AddingCardFaceUp
+	case 2:
+		m.appState = AddingDeck
+	}
+  return m
 }
 
 func returnToMainMenu(m model) model {
