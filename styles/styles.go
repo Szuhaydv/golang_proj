@@ -20,7 +20,7 @@ type Deck struct {
 	Review    string
 	Total     string
 	CreatedAt time.Time
-  Cards []Flashcard
+  Flashcards []Flashcard
 }
 
 type DeckState struct {

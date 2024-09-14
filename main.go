@@ -32,6 +32,7 @@ type model struct {
 	selectedButton int
 	appState       AppState
 	textInput      textinput.Model
+	tempFaceUpCard string
 }
 
 const layout = "2006-01-02"
@@ -49,7 +50,7 @@ var uninitializedDecks = []styles.Deck{
 	{
 		Name:      "Spanish 🇪🇸",
 		CreatedAt: parseDate("2012-12-24"),
-		Cards: []styles.Flashcard{
+		Flashcards: []styles.Flashcard{
 			{FaceUp: "Hola", FaceDown: "Hello", IsLearned: false, ReviewDate: parseDate("2024-09-15")},
 			{FaceUp: "Adiós", FaceDown: "Goodbye", IsLearned: true, ReviewDate: parseDate("2024-09-16")},
 			{FaceUp: "Gracias", FaceDown: "Thank you", IsLearned: false, ReviewDate: parseDate("2024-09-17")},
@@ -60,7 +61,7 @@ var uninitializedDecks = []styles.Deck{
 	{
 		Name:      "German 🇩🇪",
 		CreatedAt: parseDate("2011-05-14"),
-		Cards: []styles.Flashcard{
+		Flashcards: []styles.Flashcard{
 			{FaceUp: "Hallo", FaceDown: "Hello", IsLearned: false, ReviewDate: parseDate("2024-09-20")},
 			{FaceUp: "Tschüss", FaceDown: "Goodbye", IsLearned: true, ReviewDate: parseDate("2024-09-21")},
 			{FaceUp: "Danke", FaceDown: "Thank you", IsLearned: false, ReviewDate: parseDate("2024-09-09")},
@@ -71,7 +72,7 @@ var uninitializedDecks = []styles.Deck{
 	{
 		Name:      "French 🇫🇷",
 		CreatedAt: parseDate("2009-07-18"),
-		Cards: []styles.Flashcard{
+		Flashcards: []styles.Flashcard{
 			{FaceUp: "Bonjour", FaceDown: "Hello", IsLearned: true, ReviewDate: parseDate("2024-09-13")},
 			{FaceUp: "Merci", FaceDown: "Thank you", IsLearned: false, ReviewDate: parseDate("2024-09-12")},
 			{FaceUp: "Pomme", FaceDown: "Apple", IsLearned: true, ReviewDate: parseDate("2024-09-25")},
@@ -83,23 +84,23 @@ var uninitializedDecks = []styles.Deck{
 
 func initializeDecks(decks []styles.Deck) *[]styles.Deck {
 	for deckIndex, deck := range decks {
-		decks[deckIndex].Total = strconv.Itoa(len(decks[deckIndex].Cards))
+		decks[deckIndex].Total = strconv.Itoa(len(decks[deckIndex].Flashcards))
 		readyForReview := 0
-		for _, card := range deck.Cards {
+		for _, card := range deck.Flashcards {
 			if card.ReviewDate.Before(time.Now()) {
 				readyForReview += 1
 			}
 		}
 		decks[deckIndex].Review = strconv.Itoa(readyForReview)
 	}
-  return &decks
+	return &decks
 }
 
 func initialModel() model {
-  initializedDecks := initializeDecks(uninitializedDecks)
+	initializedDecks := initializeDecks(uninitializedDecks)
 
 	return model{
-    decks: *initializedDecks,
+		decks:          *initializedDecks,
 		hoveredDeck:    0,
 		selectedDeck:   -1,
 		selectedButton: -1,
@@ -193,18 +194,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case AddingDeck:
 			switch msg.String() {
 			case "enter":
-        inputValue := m.textInput.Value()
+				inputValue := m.textInput.Value()
 
-        if inputValue != "" {
-          deckValue := styles.Deck{
-            Name: inputValue, 
-            CreatedAt: time.Now().Truncate(24 * time.Hour),
-            Review: "0",
-            Total: "0",
-          }
-          m.decks = append(m.decks, deckValue)
-        }
-        m = returnToMainMenu(m)
+				if inputValue != "" {
+					deckValue := styles.Deck{
+						Name:      inputValue,
+						CreatedAt: time.Now().Truncate(24 * time.Hour),
+						Review:    "0",
+						Total:     "0",
+					}
+					m.decks = append(m.decks, deckValue)
+				}
+				m = returnToMainMenu(m)
 			case "esc":
 				m = returnToMainMenu(m)
 			}
@@ -212,7 +213,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case AddingCardFaceUp:
 			switch msg.String() {
 			case "enter":
-				m.appState = AddingCardFaceDown
+				inputValue := m.textInput.Value()
+				if inputValue != "" {
+					m.tempFaceUpCard = inputValue
+					m.textInput.Reset()
+					m.appState = AddingCardFaceDown
+				}
 			case "esc":
 				m = returnToMainMenu(m)
 			}
@@ -220,11 +226,28 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case AddingCardFaceDown:
 			switch msg.String() {
 			case "enter":
+				inputValue := m.textInput.Value()
+				if inputValue != "" {
+					card := styles.Flashcard{
+						FaceUp:   m.tempFaceUpCard,
+						FaceDown: inputValue,
+					}
+          selectedDeck := &m.decks[m.selectedDeck]
+					selectedDeck.Flashcards = append(selectedDeck.Flashcards, card)
+          currentTotal, err := strconv.Atoi(selectedDeck.Total)
+          if err != nil {
+            fmt.Println("Erorr converting string to int")
+          }
+          newTotal := currentTotal + 1
+          newTotalString := strconv.Itoa(newTotal)
+          selectedDeck.Total = newTotalString
+					m.tempFaceUpCard = ""
+          m = returnToMainMenu(m)
+				}
 			case "esc":
 				m = returnToMainMenu(m)
 			}
 			m.textInput, _ = m.textInput.Update(msg)
-
 		}
 
 	}
