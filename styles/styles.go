@@ -1,6 +1,8 @@
 package styles
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -55,7 +57,7 @@ func Header(empty bool) string {
 		rightCellBorder.BottomRight = "┤"
 	}
 
-  headerCellStyle := lipgloss.NewStyle().PaddingLeft(2).Bold(true)
+	headerCellStyle := lipgloss.NewStyle().PaddingLeft(2).Bold(true)
 
 	leftCellStyle := headerCellStyle.
 		Border(leftCellBorder, true, false, true, true).
@@ -69,13 +71,13 @@ func Header(empty bool) string {
 		Border(rightCellBorder, true, true, true, false).
 		Width(16)
 
-	return lipgloss.JoinHorizontal(lipgloss.Bottom, 
-    leftCellStyle.Render("Decks"), 
-    headerDivider, 
-    middleCellStyle.Render("Review / Total"), 
-    headerDivider, 
-    rightCellStyle.Render("Created at"),
-  )
+	return lipgloss.JoinHorizontal(lipgloss.Bottom,
+		leftCellStyle.Render("Decks"),
+		headerDivider,
+		middleCellStyle.Render("Review / Total"),
+		headerDivider,
+		rightCellStyle.Render("Created at"),
+	)
 }
 
 func Row(state DeckState) string {
@@ -127,9 +129,9 @@ func checkIfButtonSelected(selectedButton int, buttonNo int) int {
 	if selectedButton == buttonNo {
 		return 0
 	} else {
-    if buttonNo == 1 || buttonNo == 2 {
-      return 8
-    }
+		if buttonNo == 1 || buttonNo == 2 {
+			return 8
+		}
 		return 4
 	}
 }
@@ -150,50 +152,71 @@ func ButtonMenu(selectedButton int) string {
 	buttons := []string{playButton, addDeckButton, addCardButton}
 	if selectedButton != -1 {
 		buttons = append(buttons[:selectedButton+1], buttons[selectedButton:]...)
-    arrowMargin := 6
-    if selectedButton == 0 {
-      arrowMargin = 2
-    }
+		arrowMargin := 6
+		if selectedButton == 0 {
+			arrowMargin = 2
+		}
 		buttons[selectedButton] = lipgloss.NewStyle().MarginLeft(arrowMargin).Render("→ ")
 	}
 	return lipgloss.JoinHorizontal(lipgloss.Center, buttons...)
 }
 
 func InitTextinput() textinput.Model {
-   ti := textinput.New()
+	ti := textinput.New()
 	ti.Placeholder = "Enter deck name"
 	ti.Focus()
-  ti.TextStyle = lipgloss.NewStyle().Background(lipgloss.Color("#4CAC00")).Foreground(lipgloss.Color("#000000"))
+	ti.TextStyle = lipgloss.NewStyle().Background(lipgloss.Color("#4CAC00")).Foreground(lipgloss.Color("#000000"))
 	ti.CharLimit = 20
 	ti.Width = 24
-  return ti
+	return ti
 }
 
-func AddDeckMenu(ti textinput.Model) string {
-  
-  boxStyle := lipgloss.NewStyle().
-    Border(lipgloss.RoundedBorder()).
-    Width(60)
+func AddCardMenu(ti textinput.Model, deckName string, isFaceUp bool) string {
+  return addingComponent(ti, deckName, isFaceUp)
+}
 
-  escText := lipgloss.NewStyle().Faint(true).Render("Esc")
+func addingComponent(ti textinput.Model, deckName string, isFaceUp bool) string {
+	boxStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		Width(60)
+
+	escText := lipgloss.NewStyle().Faint(true).Render("Esc")
 	title := "Creating new deck"
-  contentWidth := 60 
+  if deckName != "" {
+    title = fmt.Sprintf("Adding new card to '%v'", deckName)
+  }
+	contentWidth := 60
 	escWidth := lipgloss.Width(escText)
 	titleWidth := lipgloss.Width(title)
 	paddingLeft := (contentWidth - escWidth - titleWidth) / 2
 
-  titleText := lipgloss.NewStyle().MarginLeft(paddingLeft).Underline(true).Bold(true).Render(title)
+	titleText := lipgloss.NewStyle().MarginLeft(paddingLeft).Underline(true).Bold(true).Render(title)
 	titleRow := lipgloss.JoinHorizontal(lipgloss.Left, escText, titleText)
 
-  inputLabelWidth := escWidth + (contentWidth - escWidth - 24) / 2
-  labelStyle := lipgloss.NewStyle().
-    Width(inputLabelWidth).
-    Align(lipgloss.Right).
-    MarginRight(2)
+  textInputWidth := lipgloss.Width(ti.View())
 
-  inputLabel := labelStyle.Render("Name:")
+	inputLabelWidth := escWidth + (contentWidth-escWidth-textInputWidth)/2
+	labelStyle := lipgloss.NewStyle().
+		Width(inputLabelWidth).
+		Align(lipgloss.Right).
+		MarginRight(2)
 
-  inputRow := lipgloss.JoinHorizontal(lipgloss.Center, inputLabel, ti.View())
+  label := "Name:"
+  if deckName != "" {
+    if isFaceUp {
+      label = "Face up:"
+    } else {
+      label = "Face down:"
+    }
+  }
+	inputLabel := labelStyle.Render(label)
 
-  return boxStyle.Render(lipgloss.JoinVertical(0, titleRow + "\n\n", inputRow + "\n\n"))
+	inputRow := lipgloss.JoinHorizontal(lipgloss.Center, inputLabel, ti.View())
+
+	return boxStyle.Render(lipgloss.JoinVertical(0, titleRow+"\n\n", inputRow+"\n\n"))
+
+}
+
+func AddDeckMenu(ti textinput.Model) string {
+  return addingComponent(ti, "", false)
 }

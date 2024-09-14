@@ -18,7 +18,8 @@ const (
 	DeckSelection AppState = iota
 	ButtonMenu
 	AddingDeck
-	AddingCard
+	AddingCardFaceUp
+	AddingCardFaceDown
 	PlayingDeck
 )
 
@@ -57,7 +58,7 @@ func initialModel() model {
 		selectedDeck:   -1,
 		selectedButton: -1,
 		appState:       DeckSelection,
-    textInput: styles.InitTextinput(),
+		textInput:      styles.InitTextinput(),
 	}
 }
 
@@ -66,10 +67,15 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) View() string {
-	if m.appState == AddingDeck {
-    return styles.AddDeckMenu(m.textInput)
-  } 
-  header := styles.Header(len(m.decks) == 0)
+	switch m.appState {
+	case AddingDeck:
+		return styles.AddDeckMenu(m.textInput)
+	case AddingCardFaceUp:
+		return styles.AddCardMenu(m.textInput, m.decks[m.selectedDeck].Name, true)
+	case AddingCardFaceDown:
+		return styles.AddCardMenu(m.textInput, m.decks[m.selectedDeck].Name, false)
+	}
+	header := styles.Header(len(m.decks) == 0)
 	rows := []string{header}
 
 	for i, deck := range m.decks {
@@ -133,25 +139,45 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case 1:
 					m.appState = AddingDeck
 				case 2:
-					m.appState = AddingCard
+					m.appState = AddingCardFaceUp
 				}
 			}
-    case AddingDeck:
-      if msg.String() == "enter" {
-        
-      }
-      if msg.String() == "esc" {
-        m.appState = DeckSelection
-        m.hoveredDeck = 0
-        m.selectedDeck = -1
-        m.selectedButton = -1
-        m.textInput.Reset()
-      }
-      m.textInput, _ = m.textInput.Update(msg)
+		case AddingDeck:
+			switch msg.String() {
+			case "enter":
+			case "esc":
+				m = returnToMainMenu(m)
+			}
+			m.textInput, _ = m.textInput.Update(msg)
+		case AddingCardFaceUp:
+			switch msg.String() {
+			case "enter":
+				m.appState = AddingCardFaceDown
+			case "esc":
+				m = returnToMainMenu(m)
+			}
+			m.textInput, _ = m.textInput.Update(msg)
+		case AddingCardFaceDown:
+			switch msg.String() {
+			case "enter":
+			case "esc":
+				m = returnToMainMenu(m)
+			}
+			m.textInput, _ = m.textInput.Update(msg)
+
 		}
 
 	}
 	return m, nil
+}
+
+func returnToMainMenu(m model) model {
+	m.appState = DeckSelection
+	m.hoveredDeck = 0
+	m.selectedDeck = -1
+	m.selectedButton = -1
+	m.textInput.Reset()
+	return m
 }
 
 func main() {
