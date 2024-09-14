@@ -193,6 +193,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case AddingDeck:
 			switch msg.String() {
 			case "enter":
+        inputValue := m.textInput.Value()
+
+        if inputValue != "" {
+          deckValue := styles.Deck{
+            Name: inputValue, 
+            CreatedAt: time.Now().Truncate(24 * time.Hour),
+            Review: "0",
+            Total: "0",
+          }
+          m.decks = append(m.decks, deckValue)
+        }
+        m = returnToMainMenu(m)
 			case "esc":
 				m = returnToMainMenu(m)
 			}
