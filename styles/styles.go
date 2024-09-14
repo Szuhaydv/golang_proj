@@ -30,6 +30,14 @@ type DeckState struct {
 	IsBottomRow    bool
 }
 
+type SubMenu int
+
+const (
+  PlayDeck SubMenu = iota
+  AddCard
+  AddDeck
+)
+
 var defaultBorder = lipgloss.Border{
 	Top:         "─",
 	Bottom:      "─",
@@ -181,10 +189,18 @@ func InitTextinput() textinput.Model {
 }
 
 func AddCardMenu(ti textinput.Model, deckName string, isFaceUp bool) string {
-  return addingComponent(ti, deckName, isFaceUp)
+  return addingComponent(ti, deckName, isFaceUp, "")
 }
 
-func addingComponent(ti textinput.Model, deckName string, isFaceUp bool) string {
+func AddDeckMenu(ti textinput.Model) string {
+  return addingComponent(ti, "", false, "")
+}
+
+func PlayDeckMenu(ti textinput.Model, word string) string {
+  return addingComponent(ti, "", false, word)
+}
+
+func addingComponent(ti textinput.Model, deckName string, isFaceUp bool, word string) string {
 	boxStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		Width(60)
@@ -193,13 +209,18 @@ func addingComponent(ti textinput.Model, deckName string, isFaceUp bool) string 
 	title := "Creating new deck"
   if deckName != "" {
     title = fmt.Sprintf("Adding new card to '%v'", deckName)
+  } else if word != "" {
+    labelText := lipgloss.NewStyle().MarginRight(4).Render("Word:")
+    wordText := lipgloss.NewStyle().Foreground(lipgloss.Color("#FB9700")).Render(word)
+    title = lipgloss.JoinHorizontal(0, labelText, wordText)
   }
 	contentWidth := 60
 	escWidth := lipgloss.Width(escText)
 	titleWidth := lipgloss.Width(title)
 	paddingLeft := (contentWidth - escWidth - titleWidth) / 2
 
-	titleText := lipgloss.NewStyle().MarginLeft(paddingLeft).Underline(true).Bold(true).Render(title)
+	titleText := lipgloss.NewStyle().MarginLeft(paddingLeft).Bold(true).Render(title)
+
 	titleRow := lipgloss.JoinHorizontal(lipgloss.Left, escText, titleText)
 
   textInputWidth := lipgloss.Width(ti.View())
@@ -217,6 +238,8 @@ func addingComponent(ti textinput.Model, deckName string, isFaceUp bool) string 
     } else {
       label = "Face down:"
     }
+  } else if word != "" {
+    label = "Meaning:"
   }
 	inputLabel := labelStyle.Render(label)
 
@@ -226,6 +249,3 @@ func addingComponent(ti textinput.Model, deckName string, isFaceUp bool) string 
 
 }
 
-func AddDeckMenu(ti textinput.Model) string {
-  return addingComponent(ti, "", false)
-}

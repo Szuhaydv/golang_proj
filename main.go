@@ -121,8 +121,8 @@ func (m model) View() string {
 		return styles.AddCardMenu(m.textInput, m.decks[m.selectedDeck].Name, true)
 	case AddingCardFaceDown:
 		return styles.AddCardMenu(m.textInput, m.decks[m.selectedDeck].Name, false)
-		//  case PlayingDeck:
-		//    return styles.PlayMenu
+	case PlayingDeck:
+		return styles.PlayDeckMenu(m.textInput, m.decks[m.selectedDeck].Flashcards[0].FaceUp)
 	}
 	header := styles.Header(len(m.decks) == 0)
 	rows := []string{header}
@@ -232,20 +232,28 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						FaceUp:   m.tempFaceUpCard,
 						FaceDown: inputValue,
 					}
-          selectedDeck := &m.decks[m.selectedDeck]
+					selectedDeck := &m.decks[m.selectedDeck]
 					selectedDeck.Flashcards = append(selectedDeck.Flashcards, card)
-          currentTotal, err := strconv.Atoi(selectedDeck.Total)
-          if err != nil {
-            fmt.Println("Erorr converting string to int")
-          }
-          newTotal := currentTotal + 1
-          newTotalString := strconv.Itoa(newTotal)
-          selectedDeck.Total = newTotalString
+					currentTotal, err := strconv.Atoi(selectedDeck.Total)
+					if err != nil {
+						fmt.Println("Erorr converting string to int")
+					}
+					newTotal := currentTotal + 1
+					newTotalString := strconv.Itoa(newTotal)
+					selectedDeck.Total = newTotalString
 					m.tempFaceUpCard = ""
-          m = returnToMainMenu(m)
+					m = returnToMainMenu(m)
 				}
 			case "esc":
 				m = returnToMainMenu(m)
+			}
+			m.textInput, _ = m.textInput.Update(msg)
+		case PlayingDeck:
+			switch msg.String() {
+			case "enter":
+
+			case "esc":
+        m = returnToMainMenu(m)
 			}
 			m.textInput, _ = m.textInput.Update(msg)
 		}
