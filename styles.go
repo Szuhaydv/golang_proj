@@ -189,10 +189,10 @@ func InitTextinput() textinput.Model {
 }
 
 type SubMenuData struct {
-	ti       textinput.Model
-	deckName string
-	isFaceUp bool
-	word     string
+	ti             textinput.Model
+	deckName       string
+	word           string
+	isGuessCorrect bool
 }
 
 func AddCardMenu(ti textinput.Model, deckName string, isFaceUp bool) string {
@@ -203,7 +203,6 @@ func AddCardMenu(ti textinput.Model, deckName string, isFaceUp bool) string {
 	data := SubMenuData{
 		ti:       ti,
 		deckName: deckName,
-		isFaceUp: isFaceUp,
 	}
 	return addingComponent(state, data)
 }
@@ -212,15 +211,15 @@ func AddDeckMenu(ti textinput.Model) string {
 	return addingComponent(AddingDeck, SubMenuData{ti: ti})
 }
 
-func PlayDeckMenu(ti textinput.Model, word string, isFaceUp bool) string {
+func PlayDeckMenu(ti textinput.Model, word string, isFaceUp bool, isGuessCorrect bool) string {
 	state := PlayingDeckGuessing
 	if !isFaceUp {
 		state = PlayingDeckResult
 	}
 	data := SubMenuData{
-		ti:       ti,
-		isFaceUp: isFaceUp,
-		word:     word,
+		ti:   ti,
+		word: word,
+    isGuessCorrect: isGuessCorrect,
 	}
 	return addingComponent(state, data)
 }
@@ -264,19 +263,23 @@ func addingComponent(appState AppState, data SubMenuData) string {
 	} else if appState == PlayingDeckGuessing {
 		label = "Meaning:"
 	} else if appState == PlayingDeckResult {
-    label = "Meaning was:"
-  }
+		if data.isGuessCorrect {
+			label = "Correct:"
+		} else {
+			label = "Meaning was:"
+		}
+	}
 	inputLabel := labelStyle.Render(label)
 
 	inputRow := lipgloss.JoinHorizontal(lipgloss.Center, inputLabel, data.ti.View())
 	helpRow := "\n"
-	if appState == PlayingDeckResult   {
+	if appState == PlayingDeckResult {
 		helpLabel := lipgloss.NewStyle().MarginRight(2).Render("Repeat in:")
 		helpText := lipgloss.NewStyle().Faint(true).Render("[1]-Now [2]-1 day [3]-3 days [4]-7 days")
 		helpRow = lipgloss.JoinHorizontal(0, helpLabel, helpText)
 		helpRowWidth := lipgloss.Width(helpRow)
 		helpRowMargin := (contentWidth - helpRowWidth) / 2
-    helpRow = lipgloss.NewStyle().MarginLeft(helpRowMargin).Render(helpRow)
+		helpRow = lipgloss.NewStyle().MarginLeft(helpRowMargin).Render(helpRow)
 	}
-	return boxStyle.Render(lipgloss.JoinVertical(0, titleRow+"\n\n", inputRow + "\n", helpRow))
+	return boxStyle.Render(lipgloss.JoinVertical(0, titleRow+"\n\n", inputRow+"\n", helpRow))
 }

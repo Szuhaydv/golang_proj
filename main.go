@@ -2,7 +2,7 @@ package main
 
 import (
 	"strconv"
-	// "strings"
+	"strings"
 
 	"fmt"
 	"os"
@@ -27,13 +27,13 @@ const (
 )
 
 type model struct {
-	decks             []Deck
-	hoveredDeck       int
-	selectedDeck      int
-	selectedButton    int
-	appState          AppState
-	textInput         textinput.Model
-	nameOfNewCard     string
+	decks            []Deck
+	hoveredDeck      int
+	selectedDeck     int
+	selectedButton   int
+	appState         AppState
+	textInput        textinput.Model
+	nameOfNewCard    string
 	learnFlashcardID int
 }
 
@@ -124,11 +124,17 @@ func (m model) View() string {
 	case AddingCardFaceDown:
 		return AddCardMenu(m.textInput, m.decks[m.selectedDeck].Name, false)
 	case PlayingDeckGuessing:
-    flashcardInLearning := m.decks[m.selectedDeck].Flashcards[m.learnFlashcardID]
-		return PlayDeckMenu(m.textInput, flashcardInLearning.FaceUp, true)
+		flashcardInLearning := m.decks[m.selectedDeck].Flashcards[m.learnFlashcardID]
+		return PlayDeckMenu(m.textInput, flashcardInLearning.FaceUp, true, false)
 	case PlayingDeckResult:
-    flashcardInLearning := m.decks[m.selectedDeck].Flashcards[m.learnFlashcardID]
-    return PlayDeckMenu(m.textInput, flashcardInLearning.FaceUp, false)
+		flashcardInLearning := m.decks[m.selectedDeck].Flashcards[m.learnFlashcardID]
+		if strings.ToLower(flashcardInLearning.FaceDown) == strings.ToLower(m.textInput.Value()) {
+			return PlayDeckMenu(m.textInput, flashcardInLearning.FaceUp, false, true)
+		} else {
+      m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#000000")).Background(lipgloss.Color("#FF0000"))
+      m.textInput.SetValue(flashcardInLearning.FaceDown)
+			return PlayDeckMenu(m.textInput, flashcardInLearning.FaceUp, false, false)
+		}
 	}
 
 	header := Header(len(m.decks) == 0)
@@ -258,12 +264,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case PlayingDeckGuessing:
 			switch msg.String() {
 			case "enter":
-        // cardInLearning := m.decks[m.selectedDeck].Flashcards[m.learnFlashcardID]
-        // if strings.ToLower(m.textInput.Value()) == strings.ToLower(cardInLearning.FaceDown) {
-        //
-        // }
-        // m.textInput.Reset()
-        // m.textInput.SetValue(m.decks[m.selectedDeck].Flashcards[m.learnFlashcardID].FaceDown)
 				m.appState = PlayingDeckResult
 			case "esc":
 				m = returnToMainMenu(m)
@@ -271,7 +271,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.textInput, _ = m.textInput.Update(msg)
 		case PlayingDeckResult:
 			switch msg.String() {
-
+      case "esc":
+        m = returnToMainMenu(m)
 			}
 		}
 
@@ -279,25 +280,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func findReviewCardID(slice []Flashcard) (cardID int)  {
+func findReviewCardID(slice []Flashcard) (cardID int) {
 	for i := range slice {
 		if slice[i].ReviewDate.Before(time.Now()) {
 			return i
-    }
+		}
 	}
-  return -1
+	return -1
 }
 
 func selectButton(m model) model {
 	switch m.selectedButton {
 	case 0:
-    id := findReviewCardID(m.decks[m.selectedDeck].Flashcards)
-    if id == -1 {
-      m = returnToMainMenu(m)
-    } else {
-      m.learnFlashcardID = id
-      m.appState = PlayingDeckGuessing
-    }
+		id := findReviewCardID(m.decks[m.selectedDeck].Flashcards)
+		if id == -1 {
+			m = returnToMainMenu(m)
+		} else {
+			m.learnFlashcardID = id
+			m.appState = PlayingDeckGuessing
+		}
 	case 1:
 		m.appState = AddingCardFaceUp
 	case 2:
