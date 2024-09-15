@@ -272,12 +272,11 @@ func addingComponent(appState AppState, data SubMenuData) string {
 	helpRow := "\n"
 	if appState == PlayingDeckResult   {
 		helpLabel := lipgloss.NewStyle().MarginRight(2).Render("Repeat in:")
-		helpText := lipgloss.NewStyle().Faint(true).Render("[1] - Now [2] - 1 day [3] - 3 days [4] - 7 days")
-		lipgloss.JoinHorizontal(0, helpLabel, helpText)
+		helpText := lipgloss.NewStyle().Faint(true).Render("[1]-Now [2]-1 day [3]-3 days [4]-7 days")
+		helpRow = lipgloss.JoinHorizontal(0, helpLabel, helpText)
 		helpRowWidth := lipgloss.Width(helpRow)
-		helpRowPadding := (contentWidth - helpRowWidth) / 2
-		_ = helpRowPadding
+		helpRowMargin := (contentWidth - helpRowWidth) / 2
+    helpRow = lipgloss.NewStyle().MarginLeft(helpRowMargin).Render(helpRow)
 	}
-	return boxStyle.Render(lipgloss.JoinVertical(0, titleRow+"\n\n", inputRow+"\n\n"))
-
+	return boxStyle.Render(lipgloss.JoinVertical(0, titleRow+"\n\n", inputRow + "\n", helpRow))
 }
