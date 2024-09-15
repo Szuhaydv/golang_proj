@@ -1,4 +1,4 @@
-package styles
+package main
 
 import (
 	"fmt"
@@ -9,18 +9,18 @@ import (
 )
 
 type Flashcard struct {
-  FaceUp string
-  FaceDown string
-  IsLearned bool
-  ReviewDate time.Time
+	FaceUp     string
+	FaceDown   string
+	IsLearned  bool
+	ReviewDate time.Time
 }
 
 type Deck struct {
-	Name      string
-	Review    string
-	Total     string
-	CreatedAt time.Time
-  Flashcards []Flashcard
+	Name       string
+	Review     string
+	Total      string
+	CreatedAt  time.Time
+	Flashcards []Flashcard
 }
 
 type DeckState struct {
@@ -33,9 +33,9 @@ type DeckState struct {
 type SubMenu int
 
 const (
-  PlayDeck SubMenu = iota
-  AddCard
-  AddDeck
+	PlayDeck SubMenu = iota
+	AddCard
+	AddDeck
 )
 
 var defaultBorder = lipgloss.Border{
@@ -153,7 +153,7 @@ func checkIfButtonSelected(selectedButton int, buttonNo int) int {
 	}
 }
 
-func ButtonMenu(selectedButton int) string {
+func ButtonMenuComponent(selectedButton int) string {
 	buttonStyle := lipgloss.NewStyle().
 		Background(lipgloss.Color("#FF0000")).
 		Foreground(lipgloss.Color("#FFFFFF")).
@@ -188,32 +188,57 @@ func InitTextinput() textinput.Model {
 	return ti
 }
 
+type SubMenuData struct {
+	ti       textinput.Model
+	deckName string
+	isFaceUp bool
+	word     string
+}
+
 func AddCardMenu(ti textinput.Model, deckName string, isFaceUp bool) string {
-  return addingComponent(ti, deckName, isFaceUp, "")
+	state := AddingCardFaceUp
+	if !isFaceUp {
+		state = AddingCardFaceDown
+	}
+	data := SubMenuData{
+		ti:       ti,
+		deckName: deckName,
+		isFaceUp: isFaceUp,
+	}
+	return addingComponent(state, data)
 }
 
 func AddDeckMenu(ti textinput.Model) string {
-  return addingComponent(ti, "", false, "")
+	return addingComponent(AddingDeck, SubMenuData{ti: ti})
 }
 
-func PlayDeckMenu(ti textinput.Model, word string) string {
-  return addingComponent(ti, "", false, word)
+func PlayDeckMenu(ti textinput.Model, word string, isFaceUp bool) string {
+	state := PlayingDeckGuessing
+	if !isFaceUp {
+		state = PlayingDeckResult
+	}
+	data := SubMenuData{
+		ti:       ti,
+		isFaceUp: isFaceUp,
+		word:     word,
+	}
+	return addingComponent(state, data)
 }
 
-func addingComponent(ti textinput.Model, deckName string, isFaceUp bool, word string) string {
+func addingComponent(appState AppState, data SubMenuData) string {
 	boxStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		Width(60)
 
 	escText := lipgloss.NewStyle().Faint(true).Render("Esc")
 	title := "Creating new deck"
-  if deckName != "" {
-    title = fmt.Sprintf("Adding new card to '%v'", deckName)
-  } else if word != "" {
-    labelText := lipgloss.NewStyle().MarginRight(4).Render("Word:")
-    wordText := lipgloss.NewStyle().Foreground(lipgloss.Color("#FB9700")).Render(word)
-    title = lipgloss.JoinHorizontal(0, labelText, wordText)
-  }
+	if appState == AddingCardFaceUp || appState == AddingCardFaceDown {
+		title = fmt.Sprintf("Adding new card to '%v'", data.deckName)
+	} else if appState == PlayingDeckGuessing || appState == PlayingDeckResult {
+		labelText := lipgloss.NewStyle().MarginRight(4).Render("Word:")
+		wordText := lipgloss.NewStyle().Foreground(lipgloss.Color("#FB9700")).Render(data.word)
+		title = lipgloss.JoinHorizontal(0, labelText, wordText)
+	}
 	contentWidth := 60
 	escWidth := lipgloss.Width(escText)
 	titleWidth := lipgloss.Width(title)
@@ -223,7 +248,7 @@ func addingComponent(ti textinput.Model, deckName string, isFaceUp bool, word st
 
 	titleRow := lipgloss.JoinHorizontal(lipgloss.Left, escText, titleText)
 
-  textInputWidth := lipgloss.Width(ti.View())
+	textInputWidth := lipgloss.Width(data.ti.View())
 
 	inputLabelWidth := escWidth + (contentWidth-escWidth-textInputWidth)/2
 	labelStyle := lipgloss.NewStyle().
@@ -231,21 +256,28 @@ func addingComponent(ti textinput.Model, deckName string, isFaceUp bool, word st
 		Align(lipgloss.Right).
 		MarginRight(2)
 
-  label := "Name:"
-  if deckName != "" {
-    if isFaceUp {
-      label = "Face up:"
-    } else {
-      label = "Face down:"
-    }
-  } else if word != "" {
-    label = "Meaning:"
+	label := "Name:"
+	if appState == AddingCardFaceDown {
+		label = "Face up:"
+	} else if appState == AddingCardFaceUp {
+		label = "Face down:"
+	} else if appState == PlayingDeckGuessing {
+		label = "Meaning:"
+	} else if appState == PlayingDeckResult {
+    label = "Meaning was:"
   }
 	inputLabel := labelStyle.Render(label)
 
-	inputRow := lipgloss.JoinHorizontal(lipgloss.Center, inputLabel, ti.View())
-
+	inputRow := lipgloss.JoinHorizontal(lipgloss.Center, inputLabel, data.ti.View())
+	helpRow := "\n"
+	if appState == PlayingDeckResult   {
+		helpLabel := lipgloss.NewStyle().MarginRight(2).Render("Repeat in:")
+		helpText := lipgloss.NewStyle().Faint(true).Render("[1] - Now [2] - 1 day [3] - 3 days [4] - 7 days")
+		lipgloss.JoinHorizontal(0, helpLabel, helpText)
+		helpRowWidth := lipgloss.Width(helpRow)
+		helpRowPadding := (contentWidth - helpRowWidth) / 2
+		_ = helpRowPadding
+	}
 	return boxStyle.Render(lipgloss.JoinVertical(0, titleRow+"\n\n", inputRow+"\n\n"))
 
 }
-

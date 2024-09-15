@@ -1,7 +1,6 @@
 package main
 
 import (
-	"Szuhaydv/golang_proj/styles"
 	"strconv"
 
 	"fmt"
@@ -22,11 +21,12 @@ const (
 	AddingDeck
 	AddingCardFaceUp
 	AddingCardFaceDown
-	PlayingDeck
+	PlayingDeckGuessing
+  PlayingDeckResult
 )
 
 type model struct {
-	decks          []styles.Deck
+	decks          []Deck
 	hoveredDeck    int
 	selectedDeck   int
 	selectedButton int
@@ -46,11 +46,11 @@ func parseDate(dateStr string) time.Time {
 	return date
 }
 
-var uninitializedDecks = []styles.Deck{
+var uninitializedDecks = []Deck{
 	{
 		Name:      "Spanish 🇪🇸",
 		CreatedAt: parseDate("2012-12-24"),
-		Flashcards: []styles.Flashcard{
+		Flashcards: []Flashcard{
 			{FaceUp: "Hola", FaceDown: "Hello", IsLearned: false, ReviewDate: parseDate("2024-09-15")},
 			{FaceUp: "Adiós", FaceDown: "Goodbye", IsLearned: true, ReviewDate: parseDate("2024-09-16")},
 			{FaceUp: "Gracias", FaceDown: "Thank you", IsLearned: false, ReviewDate: parseDate("2024-09-17")},
@@ -61,7 +61,7 @@ var uninitializedDecks = []styles.Deck{
 	{
 		Name:      "German 🇩🇪",
 		CreatedAt: parseDate("2011-05-14"),
-		Flashcards: []styles.Flashcard{
+		Flashcards: []Flashcard{
 			{FaceUp: "Hallo", FaceDown: "Hello", IsLearned: false, ReviewDate: parseDate("2024-09-20")},
 			{FaceUp: "Tschüss", FaceDown: "Goodbye", IsLearned: true, ReviewDate: parseDate("2024-09-21")},
 			{FaceUp: "Danke", FaceDown: "Thank you", IsLearned: false, ReviewDate: parseDate("2024-09-09")},
@@ -72,7 +72,7 @@ var uninitializedDecks = []styles.Deck{
 	{
 		Name:      "French 🇫🇷",
 		CreatedAt: parseDate("2009-07-18"),
-		Flashcards: []styles.Flashcard{
+		Flashcards: []Flashcard{
 			{FaceUp: "Bonjour", FaceDown: "Hello", IsLearned: true, ReviewDate: parseDate("2024-09-13")},
 			{FaceUp: "Merci", FaceDown: "Thank you", IsLearned: false, ReviewDate: parseDate("2024-09-12")},
 			{FaceUp: "Pomme", FaceDown: "Apple", IsLearned: true, ReviewDate: parseDate("2024-09-25")},
@@ -82,7 +82,7 @@ var uninitializedDecks = []styles.Deck{
 	},
 }
 
-func initializeDecks(decks []styles.Deck) *[]styles.Deck {
+func initializeDecks(decks []Deck) *[]Deck {
 	for deckIndex, deck := range decks {
 		decks[deckIndex].Total = strconv.Itoa(len(decks[deckIndex].Flashcards))
 		readyForReview := 0
@@ -105,7 +105,7 @@ func initialModel() model {
 		selectedDeck:   -1,
 		selectedButton: -1,
 		appState:       DeckSelection,
-		textInput:      styles.InitTextinput(),
+		textInput:      InitTextinput(),
 	}
 }
 
@@ -116,28 +116,30 @@ func (m model) Init() tea.Cmd {
 func (m model) View() string {
 	switch m.appState {
 	case AddingDeck:
-		return styles.AddDeckMenu(m.textInput)
+		return AddDeckMenu(m.textInput)
 	case AddingCardFaceUp:
-		return styles.AddCardMenu(m.textInput, m.decks[m.selectedDeck].Name, true)
+		return AddCardMenu(m.textInput, m.decks[m.selectedDeck].Name, true)
 	case AddingCardFaceDown:
-		return styles.AddCardMenu(m.textInput, m.decks[m.selectedDeck].Name, false)
-	case PlayingDeck:
-		return styles.PlayDeckMenu(m.textInput, m.decks[m.selectedDeck].Flashcards[0].FaceUp)
+		return AddCardMenu(m.textInput, m.decks[m.selectedDeck].Name, false)
+	case PlayingDeckGuessing:
+		return PlayDeckMenu(m.textInput, m.decks[m.selectedDeck].Flashcards[0].FaceUp, true)
 	}
-	header := styles.Header(len(m.decks) == 0)
+// make it so the appState is passed (and only secondarily do you check for data passed)
+
+	header := Header(len(m.decks) == 0)
 	rows := []string{header}
 
 	for i, deck := range m.decks {
-		deckState := styles.DeckState{
+		deckState := DeckState{
 			Deck:           deck,
 			IsDeckHovered:  i == m.hoveredDeck,
 			IsDeckSelected: i == m.selectedDeck,
 			IsBottomRow:    i == len(m.decks)-1,
 		}
-		rows = append(rows, styles.Row(deckState))
+		rows = append(rows, Row(deckState))
 	}
 
-	return lipgloss.JoinVertical(0, rows...) + "\n\n" + styles.ButtonMenu(m.selectedButton)
+	return lipgloss.JoinVertical(0, rows...) + "\n\n" + ButtonMenuComponent(m.selectedButton)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -197,7 +199,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				inputValue := m.textInput.Value()
 
 				if inputValue != "" {
-					deckValue := styles.Deck{
+					deckValue := Deck{
 						Name:      inputValue,
 						CreatedAt: time.Now().Truncate(24 * time.Hour),
 						Review:    "0",
@@ -228,7 +230,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "enter":
 				inputValue := m.textInput.Value()
 				if inputValue != "" {
-					card := styles.Flashcard{
+					card := Flashcard{
 						FaceUp:   m.tempFaceUpCard,
 						FaceDown: inputValue,
 					}
@@ -248,14 +250,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m = returnToMainMenu(m)
 			}
 			m.textInput, _ = m.textInput.Update(msg)
-		case PlayingDeck:
+		case PlayingDeckGuessing:
 			switch msg.String() {
 			case "enter":
-
+        m.appState = PlayingDeckResult
 			case "esc":
         m = returnToMainMenu(m)
 			}
 			m.textInput, _ = m.textInput.Update(msg)
+    case PlayingDeckResult:
+      switch msg.String() {
+        
+      }
 		}
 
 	}
@@ -265,7 +271,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func selectButton(m model) model {
 	switch m.selectedButton {
 	case 0:
-		m.appState = PlayingDeck
+		m.appState = PlayingDeckGuessing
 	case 1:
 		m.appState = AddingCardFaceUp
 	case 2:
