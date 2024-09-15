@@ -131,8 +131,8 @@ func (m model) View() string {
 		if strings.ToLower(flashcardInLearning.FaceDown) == strings.ToLower(m.textInput.Value()) {
 			return PlayDeckMenu(m.textInput, flashcardInLearning.FaceUp, false, true)
 		} else {
-      m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#000000")).Background(lipgloss.Color("#FF0000"))
-      m.textInput.SetValue(flashcardInLearning.FaceDown)
+			m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#000000")).Background(lipgloss.Color("#FF0000"))
+			m.textInput.SetValue(flashcardInLearning.FaceDown)
 			return PlayDeckMenu(m.textInput, flashcardInLearning.FaceUp, false, false)
 		}
 	}
@@ -244,6 +244,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					card := Flashcard{
 						FaceUp:   m.nameOfNewCard,
 						FaceDown: inputValue,
+            ReviewDate: time.Now(),
 					}
 					selectedDeck := &m.decks[m.selectedDeck]
 					selectedDeck.Flashcards = append(selectedDeck.Flashcards, card)
@@ -253,7 +254,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					newTotal := currentTotal + 1
 					newTotalString := strconv.Itoa(newTotal)
+          currentReview, err := strconv.Atoi(selectedDeck.Review)
+          if err != nil {
+            fmt.Println("Error converting string to int for review")
+          }
+          newReview := currentReview + 1
+          newReviewString := strconv.Itoa(newReview)
 					selectedDeck.Total = newTotalString
+          selectedDeck.Review = newReviewString
 					m.nameOfNewCard = ""
 					m = returnToMainMenu(m)
 				}
@@ -271,13 +279,43 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.textInput, _ = m.textInput.Update(msg)
 		case PlayingDeckResult:
 			switch msg.String() {
-      case "esc":
-        m = returnToMainMenu(m)
+			case "1":
+				m.textInput.Reset()
+				m.appState = PlayingDeckGuessing
+				return m, nil
+			case "2":
+				m.decks[m.selectedDeck].Flashcards[m.learnFlashcardID].ReviewDate = time.Now().Add(24 * time.Hour).Truncate(24 * time.Hour)
+				goToNextCard(&m)
+			case "3":
+				m.decks[m.selectedDeck].Flashcards[m.learnFlashcardID].ReviewDate = time.Now().Add(24 * time.Hour).Truncate(24 * time.Hour)
+				goToNextCard(&m)
+			case "4":
+				m.decks[m.selectedDeck].Flashcards[m.learnFlashcardID].ReviewDate = time.Now().Add(24 * time.Hour).Truncate(24 * time.Hour)
+				goToNextCard(&m)
+			case "esc":
+				return returnToMainMenu(m), nil
 			}
+
 		}
 
 	}
 	return m, nil
+}
+
+func goToNextCard(m *model) {
+	reviewCount, err := strconv.Atoi(m.decks[m.selectedDeck].Review)
+	if err != nil {
+		fmt.Println("Error converting to int")
+	}
+	m.decks[m.selectedDeck].Review = strconv.Itoa(reviewCount - 1)
+  m.textInput.Reset()
+	id := findReviewCardID(m.decks[m.selectedDeck].Flashcards)
+	if id == -1 {
+		*m = returnToMainMenu(*m)
+	} else {
+		m.learnFlashcardID = id
+		m.appState = PlayingDeckGuessing
+	}
 }
 
 func findReviewCardID(slice []Flashcard) (cardID int) {
