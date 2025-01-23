@@ -180,7 +180,7 @@ func ButtonMenuComponent(selectedButton int) string {
 
 func InitTextinput() textinput.Model {
 	ti := textinput.New()
-	ti.Placeholder = "Enter deck name"
+	ti.Placeholder = "Enter card name"
 	ti.Focus()
 	ti.TextStyle = lipgloss.NewStyle().Background(lipgloss.Color("#4CAC00")).Foreground(lipgloss.Color("#000000"))
 	ti.CharLimit = 20
